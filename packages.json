@@ -1,0 +1,20 @@
+{
+	"schema_version": "1.2",
+	"packages": [
+		{
+			"name": "meetrice",
+			"description": "博客园发布插件",
+			"author": "meetrice",
+			"homepage": "https://meetrice.cnblogs.com",
+			"last_modified": "2013-01-29 05:04:31",
+			"platforms": {
+				"windows": [
+					{
+						"version": "1.0",
+						"url": "https://meetrice.cnblogs.com"
+					}
+				]
+			}
+		}
+	]
+}

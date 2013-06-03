@@ -1,0 +1,11 @@
+[
+    {
+        "caption": "用户扩展",
+        "mnemonic": "x",
+        "id": "usersmenu",
+        "children":
+        [   
+            { "command": "new_post",  "caption": "博客园发表文章" }
+        ]
+    }
+]
