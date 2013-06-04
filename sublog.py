@@ -1,7 +1,15 @@
 #coding=utf-8
 
+#TODO
+#添加发布时候的重试
+#测试在没有session的情况下是否第一次发布的时候会报错
+
 import os
 import sys
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "markdown"))
+import markdown
+
 import traceback
 import threading
 from xmlrpclib import ServerProxy, Error
@@ -86,10 +94,10 @@ class NewPostCommand(sublime_plugin.TextCommand):
         self.url = get_xml_rpc_url()
         self.server = ServerProxy(self.url)
 
-        self.post = { 'title':self.blog_info['title'],
-                'description':self.blog_content,
-                'link':'',
-                'author':self.login_name, 
+        self.post = { 'title': self.blog_info['title'],
+                'description': self.markdown2html(self.blog_content),
+                'link': '',
+                'author': self.login_name, 
                 "categories": [self.blog_info['category'].encode('utf-8')],
                 "mt_keywords": self.blog_info['tags'].encode('utf-8')
             }
@@ -119,6 +127,11 @@ class NewPostCommand(sublime_plugin.TextCommand):
         t = threading.Thread(target=self.new_post)
         t.start()
         handle_thread(t, 'Publishing ...')        
+
+    def markdown2html(self, content):
+        html = markdown.markdown(content)
+        print html
+        return html
 
     def new_post(self):
         try:
