@@ -1,23 +1,24 @@
 #coding=utf-8
+
 import os
+import sys
+import traceback
 import threading
 from xmlrpclib import ServerProxy, Error
 import HTMLParser
 from itertools import groupby
 from operator import itemgetter
 import xmlrpclib
-#import urllib.request, urllib.parse, urllib.error
+import json
 
 import sublime
 import sublime_plugin
-
 
 def status(msg, thread=False):
     if not thread:
         sublime.status_message(msg)
     else:
         sublime.set_timeout(lambda: status(msg), 0)
-
 
 def handle_thread(thread, msg=None, cb=None, i=0, direction=1, width=8):
     if thread.is_alive():
@@ -32,7 +33,7 @@ def handle_thread(thread, msg=None, cb=None, i=0, direction=1, width=8):
         status('%s [%s]' % (msg, ''.join(bar)))
         sublime.set_timeout(lambda: handle_thread(thread, msg, cb, i,
                             direction, width), 100)
-    else:
+    elif not (cb == None):
         cb()
 
 def get_login_name():
@@ -62,61 +63,73 @@ def get_xml_rpc_url():
 
     return xml_rpc_url
 
-class NewPostCommand(sublime_plugin.TextCommand):
-    """Search for snippet and insert it into document at cursor position."""
-
+class BlogInfoCommand(sublime_plugin.TextCommand):
     def run(self, edit):
+        self.view.insert(edit, 0, '#blog {"title":"", "category":"", "tags":""}\r\n')
 
-        self.login_name = get_login_name()
-        print(self.login_name);
-        self.login_password = get_login_password()
-        self.url = get_xml_rpc_url()
-
-        regions = self.view.sel()
-        if not (len(regions) > 0) or (regions[0].empty()):
-            status("Error: not text selected")
+class NewPostCommand(sublime_plugin.TextCommand):
+    def run(self, edit):
+        if not (self.get_blog_info()):
+            status("Please config blog info")
             return
 
+        if not (self.blog_info.has_key("title")):
+            status("Please set title")
+            return
+
+        if not (self.get_blog_content()):
+            status("Content may not be empty")
+            return
+
+        self.login_name = get_login_name()
+        self.login_password = get_login_password()
+        self.url = get_xml_rpc_url()
         self.server = ServerProxy(self.url)
 
-        self.post = {'title':'sublime默认标题',
-                'description':self.view.substr(regions[0]),
+        self.post = { 'title':self.blog_info['title'],
+                'description':self.blog_content,
                 'link':'',
-                'author':'meetrice@gmail.com',
-                'mt_keywords':'测试标签',
-                'category':''
+                'author':self.login_name, 
+                "categories": [self.blog_info['category'].encode('utf-8')],
+                "mt_keywords": self.blog_info['tags'].encode('utf-8')
             }
+        self.new_post_async()
 
-        self.title_prompt()
+    def get_blog_info(self):
+        first_line = self.view.substr(self.view.line(0))
+        if first_line.startswith("#blog"):
+            first_line = first_line.replace("#blog", "")
+            first_line = first_line.lstrip()
+            self.blog_info = json.loads(first_line)
+            return True
+        else: 
+            return False
 
-    def title_prompt(self):
-        self.view.window().show_input_panel("title", "", 
-                                            self.title_cb, None, None)
+    def get_blog_content(self):
+        first_line_region = self.view.line(0)
+        begin = first_line_region.end() + 1
+        end = self.view.size()
+        if end > begin:
+            self.blog_content = self.view.substr(sublime.Region(begin, end))
+            return True
+        else: 
+            return False
 
-    def title_cb(self, title):
-        self.post['title'] = title
-        self.tags_prompt()
-
-    def tags_prompt(self):
-        self.view.window().show_input_panel("tag(use ',' to splite", "",
-                                            self.tags_cb, None, None)   
-    def tags_cb(self, tags):
-        self.post['mt_keywords'] = tags    
+    def new_post_async(self):
         t = threading.Thread(target=self.new_post)
         t.start()
         handle_thread(t, 'Publishing ...')        
 
-
     def new_post(self):
-        print("new_post")
         try:
-            result = self.server.metaWeblog.newPost("", self.login_name,self.login_password, self.post,True)
+            result = self.server.metaWeblog.newPost("", self.login_name, self.login_password, self.post, True)
 
             if len(result) > 0:
                 status('Successful', True)
             else:
                 status('Error', True)
-        except Error as e:
-            print 'new post error is: %s' % e
-            status('Error', True)                                     
-      
+        except Exception as e:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            traceback.print_exception(exc_type, exc_value, exc_traceback)
+            errorMsg = 'Error: %s' % e
+            status(errorMsg, True)                                     
