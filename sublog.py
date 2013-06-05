@@ -3,6 +3,8 @@
 #TODO
 #添加发布时候的重试
 #测试在没有session的情况下是否第一次发布的时候会报错
+#频繁发送博客，博客园的提示是中文的，输出不是非常friendly
+#不明觉厉的str和unicode，encode和decode
 
 import os
 import sys
@@ -27,6 +29,35 @@ def status(msg, thread=False):
         sublime.status_message(msg)
     else:
         sublime.set_timeout(lambda: status(msg), 0)
+
+def update_blog_info(view, blog_info):
+    sublime.set_timeout(lambda: do_update_blog_info(view, blog_info), 0)
+
+def do_update_blog_info(view, blog_info):
+    blog_info_str = dump_in_str(blog_info)
+    print blog_info_str
+    edit = view.begin_edit()
+    view.replace(edit, view.line(0), "#blog %s" % blog_info_str)
+    view.end_edit(edit)
+
+def load_in_str(str):
+    obj = json.loads(str)
+    for key in obj.keys():
+        obj[key] = obj[key].encode('utf-8')
+    return obj
+
+def dump_in_str(obj):
+    str = "{";
+    keys = obj.keys()
+    for i in range(0, len(keys) - 1):
+        key = keys[i]
+        print key, obj[key]
+        str += '"%s": "%s", ' % (key, obj[key].decode('utf-8'))
+    key = keys[-1]
+    print key, obj[key]
+    str += '"%s": "%s"' % (key, obj[key].decode('utf-8')) 
+    str += "}"
+    return str
 
 def handle_thread(thread, msg=None, cb=None, i=0, direction=1, width=8):
     if thread.is_alive():
@@ -75,7 +106,7 @@ class BlogInfoCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         self.view.insert(edit, 0, '#blog {"title":"", "category":"", "tags":""}\r\n')
 
-class NewPostCommand(sublime_plugin.TextCommand):
+class PublishCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         if not (self.get_blog_info()):
             status("Please config blog info")
@@ -98,17 +129,17 @@ class NewPostCommand(sublime_plugin.TextCommand):
                 'description': self.markdown2html(self.blog_content),
                 'link': '',
                 'author': self.login_name, 
-                "categories": [self.blog_info['category'].encode('utf-8')],
-                "mt_keywords": self.blog_info['tags'].encode('utf-8')
+                "categories": [self.blog_info['category']],
+                "mt_keywords": self.blog_info['tags']
             }
-        self.new_post_async()
+        self.publish_async()
 
     def get_blog_info(self):
         first_line = self.view.substr(self.view.line(0))
         if first_line.startswith("#blog"):
             first_line = first_line.replace("#blog", "")
             first_line = first_line.lstrip()
-            self.blog_info = json.loads(first_line)
+            self.blog_info = load_in_str(first_line)
             return True
         else: 
             return False
@@ -123,24 +154,33 @@ class NewPostCommand(sublime_plugin.TextCommand):
         else: 
             return False
 
-    def new_post_async(self):
-        t = threading.Thread(target=self.new_post)
+    def publish_async(self):
+        t = threading.Thread(target=self.publish)
         t.start()
         handle_thread(t, 'Publishing ...')        
 
     def markdown2html(self, content):
         html = markdown.markdown(content)
-        print html
         return html
 
-    def new_post(self):
+    def publish(self):
         try:
-            result = self.server.metaWeblog.newPost("", self.login_name, self.login_password, self.post, True)
-
-            if len(result) > 0:
-                status('Successful', True)
-            else:
-                status('Error', True)
+            if self.blog_info.has_key("blog_id"):
+                print "edit post"
+                result = self.server.metaWeblog.editPost(self.blog_info["blog_id"], self.login_name, self.login_password, self.post, True)
+                if result:
+                    status('Successful', True)
+                else:
+                    status('Error', True)
+            else:   
+                print "new post"
+                result = self.server.metaWeblog.newPost("", self.login_name, self.login_password, self.post, True)
+                if len(result) > 0:
+                    self.blog_info["blog_id"] = result
+                    update_blog_info(self.view, self.blog_info)
+                    status('Successful', True)
+                else:
+                    status('Error', True)
         except Exception as e:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             traceback.print_exception(exc_type, exc_value, exc_traceback)

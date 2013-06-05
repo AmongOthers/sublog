@@ -5,7 +5,8 @@
         "id": "usersmenu",
         "children":
         [   
-            { "command": "new_post",  "caption": "博客园发表文章" }
+            { "command": "blog_info",  "caption": "插入头部" },
+            { "command": "publish",  "caption": "发表" }
         ]
     }
 ]
