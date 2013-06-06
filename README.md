@@ -1,5 +1,4 @@
-#blog {"category": "", "blog_id": "3120994", "tags": "", "publish": "true", "title": "使用Sublog在Sublime Text 2中发表博客"}
-# Sublog - Sublime Text 2的metaweblog插件
+#blog {"category": "", "blog_id": "3120994", "tags": "", "publish": "true", "title": "Sublog: 在Sublime Text 2中用Makrdown发表博客"}
 
 灵感来自[米米饭](http://www.cnblogs.com/meetrice/archive/2013/02/14/2911238.html)
 

@@ -6,6 +6,7 @@
 #频繁发送博客，博客园的提示是中文的，输出不是非常friendly
 #不明觉厉的str和unicode，encode和decode
 #category的自动补全
+#密码加密
 
 import os
 import sys
