@@ -5,6 +5,7 @@
 #测试在没有session的情况下是否第一次发布的时候会报错
 #频繁发送博客，博客园的提示是中文的，输出不是非常friendly
 #不明觉厉的str和unicode，encode和decode
+#category的自动补全
 
 import os
 import sys
@@ -104,7 +105,7 @@ def get_xml_rpc_url():
 
 class BlogInfoCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        self.view.insert(edit, 0, '#blog {"title":"", "category":"", "tags":""}\r\n')
+        self.view.insert(edit, 0, '#blog {"title":"", "category":"", "tags":"", "publish":"false"}\r\n')
 
 class PublishCommand(sublime_plugin.TextCommand):
     def run(self, edit):
@@ -167,14 +168,15 @@ class PublishCommand(sublime_plugin.TextCommand):
         try:
             if self.blog_info.has_key("blog_id"):
                 print "edit post"
-                result = self.server.metaWeblog.editPost(self.blog_info["blog_id"], self.login_name, self.login_password, self.post, True)
+                result = self.server.metaWeblog.editPost(self.blog_info["blog_id"], self.login_name, self.login_password, self.post, self.blog_info["publish"] == "true")
                 if result:
                     status('Successful', True)
                 else:
                     status('Error', True)
             else:   
                 print "new post"
-                result = self.server.metaWeblog.newPost("", self.login_name, self.login_password, self.post, True)
+                print self.blog_info["publish"]
+                result = self.server.metaWeblog.newPost("", self.login_name, self.login_password, self.post, self.blog_info["publish"] == "true")
                 if len(result) > 0:
                     self.blog_info["blog_id"] = result
                     update_blog_info(self.view, self.blog_info)
