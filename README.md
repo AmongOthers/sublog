@@ -8,7 +8,7 @@
 
 ## 使用方法：
 
-1. 重命名meetrice.sublime-settings.example为meetrice.sublime-settings，配置你的登录信息;
+1. 重命名meetrice.sublime-settings.example为meetrice.sublime-settings，配置你的登录信息，除了用户名，密码外，url也要修改为在管理->设置页面底部的metaweblog访问地址;
 
 2. 拷贝整个文件夹到插件库下(Preferences->Browse Packages);
 
