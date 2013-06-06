@@ -1,8 +1,9 @@
-#Sublog - Sublime Text 2的metaweblog插件
+#blog {"title":"使用Sublog在Sublime Text 2中发表博客", "category":"", "tags":"", "publish":"true"}
+# Sublog - Sublime Text 2的metaweblog插件
 
-基础框架来自[米米饭](http://www.cnblogs.com/meetrice/archive/2013/02/14/2911238.html)，目前只是测试了cnblogs。
+灵感来自[米米饭](http://www.cnblogs.com/meetrice/archive/2013/02/14/2911238.html)，目前只是测试了cnblogs。
 
-使用方法：
+## 使用方法：
 
 1. 重命名meetrice.sublime-settings.example为meetrice.sublime-settings，配置你的登录信息;
 
@@ -10,8 +11,19 @@
 
 3. 重启Sublime text2, "shift + F8"插入header信息，其中tags使用","分割，publish为"false"的时候表示为草稿;
 
-4. 编辑完成后, "shift + F9"发布新博客，编辑博客后同样使用"shift + F9"发布更新.
+4. 编辑完成后, "shift + F9"发布新博客，修改后同样使用"shift + F9"发布更新.
 
 5. 在博客园的管理->设置页面上传css样式(markdown.css)
 
 6. enjoy!
+
+## 项目主页：
+[sublog](https://github.com/AmongOthers/sublog)
+
+## Makrdown兼容性
+[使用quick-markdown-example测试效果](http://www.cnblogs.com/zhengwenwei/archive/2013/06/05/3118185.html) 不支持表格和脚注
+
+## 前方危险
+在没有Python经验的情况下，用了四天的下班时间做出来的东西，所以只是it works的程度，如果使用中遇到问题，欢迎反馈。
+
+> Hack everything!
