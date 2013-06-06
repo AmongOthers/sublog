@@ -36,7 +36,6 @@ def update_blog_info(view, blog_info):
 
 def do_update_blog_info(view, blog_info):
     blog_info_str = dump_in_str(blog_info)
-    print blog_info_str
     edit = view.begin_edit()
     view.replace(edit, view.line(0), "#blog %s" % blog_info_str)
     view.end_edit(edit)
@@ -52,10 +51,8 @@ def dump_in_str(obj):
     keys = obj.keys()
     for i in range(0, len(keys) - 1):
         key = keys[i]
-        print key, obj[key]
         str += '"%s": "%s", ' % (key, obj[key].decode('utf-8'))
     key = keys[-1]
-    print key, obj[key]
     str += '"%s": "%s"' % (key, obj[key].decode('utf-8')) 
     str += "}"
     return str
@@ -175,7 +172,6 @@ class PublishCommand(sublime_plugin.TextCommand):
                     status('Error', True)
             else:   
                 print "new post"
-                print self.blog_info["publish"]
                 result = self.server.metaWeblog.newPost("", self.login_name, self.login_password, self.post, self.blog_info["publish"] == "true")
                 if len(result) > 0:
                     self.blog_info["blog_id"] = result
