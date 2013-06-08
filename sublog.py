@@ -155,7 +155,6 @@ init()
 
 class SublogPlugin(sublime_plugin.EventListener):
     def on_query_completions(self, view, prefix, locations):
-        print cats
         return cats
 
 class GetCatsCommand(sublime_plugin.TextCommand):
