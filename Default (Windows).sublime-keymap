@@ -1,4 +1,5 @@
 [  
-    {"keys": ["shift+f9"], "command": "publish"},
-    {"keys": ["shift+f8"], "command": "blog_info"}
+    {"keys": ["shift+f7"], "command": "get_cats"},
+    {"keys": ["shift+f8"], "command": "blog_info"},
+    {"keys": ["shift+f9"], "command": "publish"}
 ]  

@@ -8,6 +8,16 @@
 #category的自动补全
 #密码加密
 #发表摘要到微博
+#init初始化ServerProxy会输出错误信息，但是却可以正常工作
+#Traceback (most recent call last):
+    #  File ".\sublime_plugin.py", line 71, in reload_plugin
+    #  File ".\xmlrpclib.py", line 1199, in __call__
+    #  File ".\xmlrpclib.py", line 1489, in __request
+    #  File ".\xmlrpclib.py", line 1253, in request
+    #  File ".\xmlrpclib.py", line 1392, in _parse_response
+    #  File ".\xmlrpclib.py", line 838, in close
+    #xmlrpclib.Fault: <Fault 0: 'unsupported method called: __bases__.__nonzero__'>
+    #每次重新加载这个插件，就会再补全列表里加上一次分类的重复
 
 import os
 import sys
@@ -33,11 +43,38 @@ global login_password
 global server
 
 def init():
+    global cats
+    global login_name
+    global login_password
+    global server
+
     login_name = get_login_name()
     login_password = get_login_password()
     url = get_xml_rpc_url()
-    server = ServerProxy(self.url)
+    server = ServerProxy(url)
+    get_cats_async()
 
+def get_cats_async():
+    t = threading.Thread(target=get_cats)
+    t.start()
+    handle_thread(t, "Geting cats")
+
+def get_cats():
+    global cats
+    try:
+        result = server.metaWeblog.getCategories("", login_name, login_password)
+        print result
+        status("Successful", True)
+        cats = []
+        for item in result:
+            cat = (item["title"].lstrip(u"[随笔分类]") + "\t" + u"博客分类",
+             item["description"].lstrip(u"[随笔分类]"))
+            cats.append(cat)
+    except Exception as e:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        traceback.print_exception(exc_type, exc_value, exc_traceback)
+        errorMsg = 'Error: %s' % e
+        status(errorMsg, True)
 
 def status(msg, thread=False):
     if not thread:
@@ -114,49 +151,16 @@ def get_xml_rpc_url():
 
     return xml_rpc_url
 
+init()
 
 class SublogPlugin(sublime_plugin.EventListener):
     def on_query_completions(self, view, prefix, locations):
+        print cats
         return cats
 
 class GetCatsCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        self.login_name = get_login_name()
-        self.login_password = get_login_password()
-        self.url = get_xml_rpc_url()
-        self.server = ServerProxy(self.url)
-        self.get_cats_async()
-
-    def get_cats_async(self):
-        t = threading.Thread(target=self.get_cats)
-        t.start()
-        handle_thread(t, "Geting cats")
-
-    def get_cats(self):
-        try:
-            result = self.server.metaWeblog.getCategories("", self.login_name, self.login_password);
-            status("Successful", True)
-            cats = []
-            for item in result:
-                cat = (item["title"].encode('utf-8'), item["description"].encode('utf-8'))
-                cats.append(cat)
-            print cats
-        except Exception as e:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            traceback.print_exception(exc_type, exc_value, exc_traceback)
-            errorMsg = 'Error: %s' % e
-            status(errorMsg, True)
-
-class AutoCatCommand(sublime_plugin.TextCommand):
-    def run(self, edit):
-        selected_regions = self.view.sel()
-        region = selected_regions[0]
-        selected_str = self.view.substr(region)
-        suggestions = []
-        for cat in cats:
-            if cat["title"].startswith(selected_str):
-                suggestions.append(cat["title"])
-        self.view.showCompletions(region.begin(), selected_str, suggestions)
+        get_cats_async()
 
 class BlogInfoCommand(sublime_plugin.TextCommand):
     def run(self, edit):
@@ -176,15 +180,10 @@ class PublishCommand(sublime_plugin.TextCommand):
             status("Content may not be empty")
             return
 
-        self.login_name = get_login_name()
-        self.login_password = get_login_password()
-        self.url = get_xml_rpc_url()
-        self.server = ServerProxy(self.url)
-
         self.post = { 'title': self.blog_info['title'],
                 'description': self.markdown2html(self.blog_content),
                 'link': '',
-                'author': self.login_name,
+                'author': login_name,
                 "categories": [self.blog_info['category']],
                 "mt_keywords": self.blog_info['tags']
             }
@@ -223,14 +222,14 @@ class PublishCommand(sublime_plugin.TextCommand):
         try:
             if self.blog_info.has_key("blog_id"):
                 print "edit post"
-                result = self.server.metaWeblog.editPost(self.blog_info["blog_id"], self.login_name, self.login_password, self.post, self.blog_info["publish"] == "true")
+                result = server.metaWeblog.editPost(self.blog_info["blog_id"], login_name, login_password, self.post, self.blog_info["publish"] == "true")
                 if result:
                     status('Successful', True)
                 else:
                     status('Error', True)
             else:
                 print "new post"
-                result = self.server.metaWeblog.newPost("", self.login_name, self.login_password, self.post, self.blog_info["publish"] == "true")
+                result = server.metaWeblog.newPost("", login_name, login_password, self.post, self.blog_info["publish"] == "true")
                 if len(result) > 0:
                     self.blog_info["blog_id"] = result
                     update_blog_info(self.view, self.blog_info)
