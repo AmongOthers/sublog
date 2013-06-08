@@ -3,7 +3,7 @@
 灵感来自[米米饭](http://www.cnblogs.com/meetrice/archive/2013/02/14/2911238.html)
 
 ## 项目主页：
-[sublog](https://github.com/AmongOthers/sublog)
+[sublog](https://github.com/AmongOthers/sublogs)
 
 
 ## 使用方法：

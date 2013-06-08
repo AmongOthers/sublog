@@ -7,6 +7,7 @@
 #不明觉厉的str和unicode，encode和decode
 #category的自动补全
 #密码加密
+#发表摘要到微博
 
 import os
 import sys
@@ -25,6 +26,18 @@ import json
 
 import sublime
 import sublime_plugin
+
+global cats
+global login_name
+global login_password
+global server
+
+def init():
+    login_name = get_login_name()
+    login_password = get_login_password()
+    url = get_xml_rpc_url()
+    server = ServerProxy(self.url)
+
 
 def status(msg, thread=False):
     if not thread:
@@ -54,7 +67,7 @@ def dump_in_str(obj):
         key = keys[i]
         str += '"%s": "%s", ' % (key, obj[key].decode('utf-8'))
     key = keys[-1]
-    str += '"%s": "%s"' % (key, obj[key].decode('utf-8')) 
+    str += '"%s": "%s"' % (key, obj[key].decode('utf-8'))
     str += "}"
     return str
 
@@ -101,6 +114,50 @@ def get_xml_rpc_url():
 
     return xml_rpc_url
 
+
+class SublogPlugin(sublime_plugin.EventListener):
+    def on_query_completions(self, view, prefix, locations):
+        return cats
+
+class GetCatsCommand(sublime_plugin.TextCommand):
+    def run(self, edit):
+        self.login_name = get_login_name()
+        self.login_password = get_login_password()
+        self.url = get_xml_rpc_url()
+        self.server = ServerProxy(self.url)
+        self.get_cats_async()
+
+    def get_cats_async(self):
+        t = threading.Thread(target=self.get_cats)
+        t.start()
+        handle_thread(t, "Geting cats")
+
+    def get_cats(self):
+        try:
+            result = self.server.metaWeblog.getCategories("", self.login_name, self.login_password);
+            status("Successful", True)
+            cats = []
+            for item in result:
+                cat = (item["title"].encode('utf-8'), item["description"].encode('utf-8'))
+                cats.append(cat)
+            print cats
+        except Exception as e:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            traceback.print_exception(exc_type, exc_value, exc_traceback)
+            errorMsg = 'Error: %s' % e
+            status(errorMsg, True)
+
+class AutoCatCommand(sublime_plugin.TextCommand):
+    def run(self, edit):
+        selected_regions = self.view.sel()
+        region = selected_regions[0]
+        selected_str = self.view.substr(region)
+        suggestions = []
+        for cat in cats:
+            if cat["title"].startswith(selected_str):
+                suggestions.append(cat["title"])
+        self.view.showCompletions(region.begin(), selected_str, suggestions)
+
 class BlogInfoCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         self.view.insert(edit, 0, '#blog {"title":"", "category":"", "tags":"", "publish":"false"}\r\n')
@@ -127,7 +184,7 @@ class PublishCommand(sublime_plugin.TextCommand):
         self.post = { 'title': self.blog_info['title'],
                 'description': self.markdown2html(self.blog_content),
                 'link': '',
-                'author': self.login_name, 
+                'author': self.login_name,
                 "categories": [self.blog_info['category']],
                 "mt_keywords": self.blog_info['tags']
             }
@@ -140,7 +197,7 @@ class PublishCommand(sublime_plugin.TextCommand):
             first_line = first_line.lstrip()
             self.blog_info = load_in_str(first_line)
             return True
-        else: 
+        else:
             return False
 
     def get_blog_content(self):
@@ -150,13 +207,13 @@ class PublishCommand(sublime_plugin.TextCommand):
         if end > begin:
             self.blog_content = self.view.substr(sublime.Region(begin, end))
             return True
-        else: 
+        else:
             return False
 
     def publish_async(self):
         t = threading.Thread(target=self.publish)
         t.start()
-        handle_thread(t, 'Publishing ...')        
+        handle_thread(t, 'Publishing ...')
 
     def markdown2html(self, content):
         html = markdown.markdown(content)
@@ -171,7 +228,7 @@ class PublishCommand(sublime_plugin.TextCommand):
                     status('Successful', True)
                 else:
                     status('Error', True)
-            else:   
+            else:
                 print "new post"
                 result = self.server.metaWeblog.newPost("", self.login_name, self.login_password, self.post, self.blog_info["publish"] == "true")
                 if len(result) > 0:
@@ -184,4 +241,4 @@ class PublishCommand(sublime_plugin.TextCommand):
             exc_type, exc_value, exc_traceback = sys.exc_info()
             traceback.print_exception(exc_type, exc_value, exc_traceback)
             errorMsg = 'Error: %s' % e
-            status(errorMsg, True)                                     
+            status(errorMsg, True)
