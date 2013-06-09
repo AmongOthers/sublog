@@ -3,9 +3,7 @@
 #TODO
 #添加发布时候的重试
 #测试在没有session的情况下是否第一次发布的时候会报错
-#频繁发送博客，博客园的提示是中文的，输出不是非常friendly
 #不明觉厉的str和unicode，encode和decode
-#category的自动补全
 #密码加密
 #发表摘要到微博
 #init初始化ServerProxy会输出错误信息，但是却可以正常工作
@@ -17,7 +15,7 @@
     #  File ".\xmlrpclib.py", line 1392, in _parse_response
     #  File ".\xmlrpclib.py", line 838, in close
     #xmlrpclib.Fault: <Fault 0: 'unsupported method called: __bases__.__nonzero__'>
-    #每次重新加载这个插件，就会再补全列表里加上一次分类的重复
+#每次重新加载这个插件，就会再补全列表里加上一次分类的重复
 
 import os
 import sys
@@ -63,18 +61,23 @@ def get_cats():
     global cats
     try:
         result = server.metaWeblog.getCategories("", login_name, login_password)
-        print result
         status("Successful", True)
         cats = []
         for item in result:
-            cat = (item["title"].lstrip(u"[随笔分类]") + "\t" + u"博客分类",
-             item["description"].lstrip(u"[随笔分类]"))
+            cat = (strip_title(item["title"]) + "\t" + u"博客分类",
+            strip_title(item["description"]))
             cats.append(cat)
+            
     except Exception as e:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         traceback.print_exception(exc_type, exc_value, exc_traceback)
         errorMsg = 'Error: %s' % e
         status(errorMsg, True)
+
+def strip_title(title):
+    if title.startswith(u"[随笔分类]"):
+        title = title[6:]
+    return title
 
 def status(msg, thread=False):
     if not thread:
@@ -155,7 +158,12 @@ init()
 
 class SublogPlugin(sublime_plugin.EventListener):
     def on_query_completions(self, view, prefix, locations):
-        return cats
+        #如果当前是在第一行，准备插入分类才触发
+        current_file = view.file_name()
+        if '.md' in current_file:
+            first_line = view.line(0)
+            if locations[0] >= first_line.begin() and locations[0] <= first_line.end():
+                return cats
 
 class GetCatsCommand(sublime_plugin.TextCommand):
     def run(self, edit):
@@ -164,6 +172,10 @@ class GetCatsCommand(sublime_plugin.TextCommand):
 class BlogInfoCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         self.view.insert(edit, 0, '#blog {"title":"", "category":"", "tags":"", "publish":"false"}\r\n')
+
+class TipCommand(sublime_plugin.TextCommand):
+    def run(self, edit):
+        status(u"中国", False)
 
 class PublishCommand(sublime_plugin.TextCommand):
     def run(self, edit):
@@ -235,8 +247,8 @@ class PublishCommand(sublime_plugin.TextCommand):
                     status('Successful', True)
                 else:
                     status('Error', True)
-        except Exception as e:
+        except xmlrpclib.Fault as e:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             traceback.print_exception(exc_type, exc_value, exc_traceback)
-            errorMsg = 'Error: %s' % e
+            errorMsg = 'Error: %s' % e.faultString
             status(errorMsg, True)

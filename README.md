@@ -12,6 +12,8 @@
 
 0. 拷贝整个文件夹到插件库下(Preferences->Browse Packages);
 
+0. 博客文章以.md为后缀;
+
 0. 重启Sublime text2, "shift + F8"插入header信息，其中tags使用","分割，publish为"false"的时候表示为草稿;
 
 0. 编辑完成后, "shift + F9"发布新博客，修改后同样使用"shift + F9"发布更新（留意Sublime Text 2底下状态栏通知）
