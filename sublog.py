@@ -171,7 +171,7 @@ class GetCatsCommand(sublime_plugin.TextCommand):
 
 class BlogInfoCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        self.view.insert(edit, 0, '#blog {"title":"", "category":"", "tags":"", "publish":"false"}\r\n')
+        self.view.insert(edit, 0, '#blog {"title":"", "category":"", "tags":"", "publish":"false"}\r\n\r\n\r\n\r\n# Goal of this Article\r\n\r\n\r\n\r\n# Conclusions\r\n\r\n')
 
 class TipCommand(sublime_plugin.TextCommand):
     def run(self, edit):
