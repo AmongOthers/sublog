@@ -16,10 +16,10 @@
     #  File ".\xmlrpclib.py", line 838, in close
     #xmlrpclib.Fault: <Fault 0: 'unsupported method called: __bases__.__nonzero__'>
 #每次重新加载这个插件，就会再补全列表里加上一次分类的重复
+#under ubuntu, print u"xxx" will throw a ascii codec decode error, we should use print u"xxx".encode("utf-8")
 
 import os
 import sys
-
 sys.path.append(os.path.join(os.path.dirname(__file__), "markdown"))
 import markdown
 
@@ -75,9 +75,13 @@ def get_cats():
         status(errorMsg, True)
 
 def strip_title(title):
-    if title.startswith(u"[随笔分类]"):
-        title = title[6:]
-    return title
+    if(type(title) != type(u"")):
+        utitle = title.decode("utf-8")
+    else 
+        utitle = title
+    if utitle.startswith(u"[随笔分类]"):
+        utitle = utitle[6:]
+    return utitle
 
 def status(msg, thread=False):
     if not thread:
