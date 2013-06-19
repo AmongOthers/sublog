@@ -77,7 +77,7 @@ def get_cats():
 def strip_title(title):
     if(type(title) != type(u"")):
         utitle = title.decode("utf-8")
-    else 
+    else:
         utitle = title
     if utitle.startswith(u"[随笔分类]"):
         utitle = utitle[6:]
