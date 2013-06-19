@@ -29,7 +29,7 @@
 [使用quick-markdown-example测试效果](http://www.cnblogs.com/zhengwenwei/archive/2013/06/05/3118185.html) 不支持表格和脚注
 
 ## 前方危险
-在没有Python经验的情况下，用了四天的下班时间做出来的东西，所以只是it works的程度，目前只是测试windows平台。如果使用中遇到问题，欢迎反馈。
+在没有Python经验的情况下，用了四天的下班时间做出来的东西，所以只是it works的程度，目前测试平台有windows7, ubuntu13.04。如果使用中遇到问题，欢迎反馈。
 
 > Hack everything!
 
@@ -38,3 +38,5 @@
 0. 添加博客分类自动补全功能
 
 0. 添加文章基本结构的创建
+
+0. 修复在ubuntu下获取博客分类的编码问题(13-06-19)
