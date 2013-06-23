@@ -23,7 +23,6 @@ from os.path import join
 import locale
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), "markdown"))
-import markdown
 import re  
 import traceback
 import threading
@@ -78,8 +77,7 @@ def get_cats():
         status("Successful", True)
         cats = []
         for item in result:
-            cat = (strip_title(item["title"]) + "\t" + u"博客分类",
-            strip_title(item["description"]))
+            cat = strip_title(item["title"])
             cats.append(cat)
             
     except Exception as e:
@@ -88,18 +86,25 @@ def get_cats():
         errorMsg = 'Error: %s' % e
         status(errorMsg, True)
 
+def check_unicode(str):
+    if(type(str) != type(u"")):
+        str = str.decode("utf-8")
+    return str
+
 def strip_title(title):
-    if(type(title) != type(u"")):
-        utitle = title.decode("utf-8")
-    else:
-        utitle = title
+    utitle = check_unicode(title)
     if utitle.startswith(u"[随笔分类]"):
         utitle = utitle[6:]
-    return utitle
+        description = utitle + "\t" + u"随笔分类"
+    elif utitle.startswith(u"「网站分类」"):
+        utitle = utitle[6:]
+        description = utitle + "\t" + u"网站分类"
+    else:
+        description = description + "\t" + u"博客分类"
+    return (description, utitle)
 
 def status(msg, thread=False):
-    if(type(msg) != type(u"")):
-        msg = msg.decode("utf-8")
+    msg = check_unicode(msg)
     if not thread:
         sublime.status_message(msg)
     else:
@@ -218,10 +223,6 @@ class PublishCommand(sublime_plugin.TextCommand):
         t = threading.Thread(target=self.publish)
         t.start()
         handle_thread(t, 'Publishing ...')
-
-    def markdown2html(self, content):
-        html = markdown.markdown(content)
-        return html
 
     def node_markdown2html(self):
         post_file = self.view.file_name()

@@ -20,7 +20,14 @@ sublog-->
 
 0. 重命名sublog.sublime-settings.example为sublog.sublime-settings，配置你的登录信息，除了用户名，密码外，url也要修改为在管理->设置页面底部的metaweblog访问地址;
 
-0. 拷贝整个文件夹到插件库下(Preferences->Browse Packages);
+0. 拷贝整个文件夹到插件库下(Preferences->Browse Packages)，注意命名为"sublog";
+
+0. 安装[node.js](http://nodejs.org/)，用于语法高亮，效果：
+
+		//javascipt代码
+		var test = function() {
+			console.log("语法高亮");
+
 
 0. 重启Sublime text2, "shift + F8"插入header信息，其中tags使用","分割，publish为"false"的时候表示为草稿;
 
