@@ -18,7 +18,7 @@ sublog-->
 
 ## 使用方法：
 
-0. 重命名meetrice.sublime-settings.example为meetrice.sublime-settings，配置你的登录信息，除了用户名，密码外，url也要修改为在管理->设置页面底部的metaweblog访问地址;
+0. 重命名sublog.sublime-settings.example为sublog.sublime-settings，配置你的登录信息，除了用户名，密码外，url也要修改为在管理->设置页面底部的metaweblog访问地址;
 
 0. 拷贝整个文件夹到插件库下(Preferences->Browse Packages);
 
@@ -50,3 +50,5 @@ sublog-->
 0. 添加文章基本结构的创建
 
 0. 修复在ubuntu下获取博客分类的编码问题(13-06-19)
+
+0. 语法高亮(13-06-22)
