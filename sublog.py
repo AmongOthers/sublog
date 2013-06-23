@@ -19,10 +19,12 @@
 #under ubuntu, print u"xxx" will throw a ascii codec decode error, we should use print u"xxx".encode("utf-8")
 
 import os
+from os.path import join
+import locale
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), "markdown"))
 import markdown
-
+import re  
 import traceback
 import threading
 from xmlrpclib import ServerProxy, Error
@@ -39,16 +41,28 @@ global cats
 global login_name
 global login_password
 global server
+global header_template
+global package_path
+global sublog_js_path
 
 def init():
     global cats
     global login_name
     global login_password
     global server
+    global header_template
+    global package_path
+    global sublog_js_path
 
-    login_name = get_login_name()
-    login_password = get_login_password()
-    url = get_xml_rpc_url()
+    package_path = join(sublime.packages_path(), "Sublog")
+    sublog_js_path = join(join(package_path, "sublog_js"), "sublog.js")
+    header_template = "<!--sublog\n" + "{\n" + "    \"title\":\"%s\",\n" + "    \"category\":\"%s\",\n" + "    \"tags\":\"%s\",\n" + "    \"publish\":\"%s\",\n" + "    \"blog_id\":\"%s\"\n" + "}\n" + "sublog-->"
+    #load settings
+    settings = sublime.load_settings('sublog.sublime-settings')
+    login_name = settings.get('login_name')
+    login_password = settings.get('login_password');
+    url = settings.get('xml_rpc_url')
+
     server = ServerProxy(url)
     get_cats_async()
 
@@ -89,32 +103,6 @@ def status(msg, thread=False):
     else:
         sublime.set_timeout(lambda: status(msg), 0)
 
-def update_blog_info(view, blog_info):
-    sublime.set_timeout(lambda: do_update_blog_info(view, blog_info), 0)
-
-def do_update_blog_info(view, blog_info):
-    blog_info_str = dump_in_str(blog_info)
-    edit = view.begin_edit()
-    view.replace(edit, view.line(0), "#blog %s" % blog_info_str)
-    view.end_edit(edit)
-
-def load_in_str(str):
-    obj = json.loads(str)
-    for key in obj.keys():
-        obj[key] = obj[key].encode('utf-8')
-    return obj
-
-def dump_in_str(obj):
-    str = "{";
-    keys = obj.keys()
-    for i in range(0, len(keys) - 1):
-        key = keys[i]
-        str += '"%s": "%s", ' % (key, obj[key].decode('utf-8'))
-    key = keys[-1]
-    str += '"%s": "%s"' % (key, obj[key].decode('utf-8'))
-    str += "}"
-    return str
-
 def handle_thread(thread, msg=None, cb=None, i=0, direction=1, width=8):
     if thread.is_alive():
         next = i + direction
@@ -131,42 +119,15 @@ def handle_thread(thread, msg=None, cb=None, i=0, direction=1, width=8):
     elif not (cb == None):
         cb()
 
-def get_login_name():
-    settings = sublime.load_settings('meetrice.sublime-settings')
-    login_name = settings.get('login_name')
-
-    if not login_name:
-        sublime.error_message("No Login name found in settings")
-
-    return login_name
-
-def get_login_password():
-    settings = sublime.load_settings('meetrice.sublime-settings')
-    login_password = settings.get('login_password')
-
-    if not login_password:
-        sublime.error_message("No login_password found in settings")
-
-    return login_password
-
-def get_xml_rpc_url():
-    settings = sublime.load_settings('meetrice.sublime-settings')
-    xml_rpc_url = settings.get('xml_rpc_url')
-
-    if not xml_rpc_url:
-        sublime.error_message("No login_password found in settings")
-
-    return xml_rpc_url
-
 init()
 
 class SublogPlugin(sublime_plugin.EventListener):
     def on_query_completions(self, view, prefix, locations):
-        #如果当前是在第一行，准备插入分类才触发
         current_file = view.file_name()
         if '.md' in current_file:
-            first_line = view.line(0)
-            if locations[0] >= first_line.begin() and locations[0] <= first_line.end():
+            print view.line(locations[0])
+            line = view.substr(view.line(locations[0]))
+            if "\"category\":" in line:
                 return cats
 
 class GetCatsCommand(sublime_plugin.TextCommand):
@@ -175,11 +136,8 @@ class GetCatsCommand(sublime_plugin.TextCommand):
 
 class BlogInfoCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        self.view.insert(edit, 0, '#blog {"title":"", "category":"", "tags":"", "publish":"false"}\r\n\r\n\r\n\r\n# Goal of this Article\r\n\r\n\r\n\r\n# Conclusions\r\n\r\n')
-
-class TipCommand(sublime_plugin.TextCommand):
-    def run(self, edit):
-        status(u"中国", False)
+        header_str = header_template % ('', '', '', 'false', '')
+        self.view.insert(edit, 0, header_str + "\n\n")
 
 class PublishCommand(sublime_plugin.TextCommand):
     def run(self, edit):
@@ -191,12 +149,9 @@ class PublishCommand(sublime_plugin.TextCommand):
             status("Please set title")
             return
 
-        if not (self.get_blog_content()):
-            status("Content may not be empty")
-            return
-
         self.post = { 'title': self.blog_info['title'],
-                'description': self.markdown2html(self.blog_content),
+                #'description': self.markdown2html(self.blog_content),
+                'description': self.node_markdown2html(),
                 'link': '',
                 'author': login_name,
                 "categories": [self.blog_info['category']],
@@ -205,24 +160,59 @@ class PublishCommand(sublime_plugin.TextCommand):
         self.publish_async()
 
     def get_blog_info(self):
+        self.get_header_region()
+        if not self.header_region:
+            return False
+        header_str = self.view.substr(self.header_region) 
+        if self.is_old_format:
+            header_str = header_str.replace("#blog", "")
+            header_str = header_str.lstrip()
+            self.blog_info = json.loads(header_str)
+            #针对 #blog{...}的旧格式进行更新
+            if not self.blog_info.has_key("blog_id"):
+                self.blog_info["blog_id"] = ""
+            header_str = header_template % (self.blog_info['title'],
+             self.blog_info['category'],
+             self.blog_info['tags'],
+             self.blog_info['publish'],
+             self.blog_info['blog_id'])
+            self.is_old_format = True
+            edit = self.view.begin_edit()
+            self.view.erase(edit, self.header_region)
+            self.view.insert(edit, 0, header_str + "\n\n")
+            self.view.end_edit(edit)
+            self.get_header_region()
+        else:
+            pattern = re.compile("<!--sublog(.*)sublog-->", re.MULTILINE | re.DOTALL)
+            match = pattern.match(header_str)
+            header = match.group(1)
+            self.blog_info = json.loads(header)
+        return True
+
+    def get_header_region(self):
+        self.is_old_format = False
         first_line = self.view.substr(self.view.line(0))
         if first_line.startswith("#blog"):
-            first_line = first_line.replace("#blog", "")
-            first_line = first_line.lstrip()
-            self.blog_info = load_in_str(first_line)
-            return True
+            self.header_region = self.view.line(0)
+            self.is_old_format = True
+        elif first_line.startswith("<!--sublog"):
+            self.header_region = self.view.find("<!--sublog((.|\n)*)sublog-->", 0)
         else:
-            return False
+            self.header_region = None
 
-    def get_blog_content(self):
-        first_line_region = self.view.line(0)
-        begin = first_line_region.end() + 1
-        end = self.view.size()
-        if end > begin:
-            self.blog_content = self.view.substr(sublime.Region(begin, end))
-            return True
-        else:
-            return False
+    def update_blog_info(self):
+        sublime.set_timeout(lambda: self.do_update_blog_info(), 0)
+
+    def do_update_blog_info(self):
+        header_str = header_template % (self.blog_info['title'],
+         self.blog_info['category'],
+         self.blog_info['tags'],
+         self.blog_info['publish'],
+         self.blog_info['blog_id'])
+        print "header %s" % header_str
+        edit = self.view.begin_edit()
+        self.view.replace(edit, self.header_region, header_str)
+        self.view.end_edit(edit)
 
     def publish_async(self):
         t = threading.Thread(target=self.publish)
@@ -233,9 +223,16 @@ class PublishCommand(sublime_plugin.TextCommand):
         html = markdown.markdown(content)
         return html
 
+    def node_markdown2html(self):
+        post_file = self.view.file_name()
+        command = u"node \"%s\" \"%s\"" % (sublog_js_path, post_file)
+        p = os.popen(command.encode(locale.getpreferredencoding()))
+        str = p.read()
+        return str
+
     def publish(self):
         try:
-            if self.blog_info.has_key("blog_id"):
+            if self.blog_info.has_key("blog_id") and self.blog_info["blog_id"] != "":
                 print "edit post"
                 result = server.metaWeblog.editPost(self.blog_info["blog_id"], login_name, login_password, self.post, self.blog_info["publish"] == "true")
                 if result:
@@ -245,9 +242,10 @@ class PublishCommand(sublime_plugin.TextCommand):
             else:
                 print "new post"
                 result = server.metaWeblog.newPost("", login_name, login_password, self.post, self.blog_info["publish"] == "true")
-                if len(result) > 0:
+                if result:
                     self.blog_info["blog_id"] = result
-                    update_blog_info(self.view, self.blog_info)
+                    print self.blog_info
+                    self.update_blog_info()
                     status('Successful', True)
                 else:
                     status('Error', True)
