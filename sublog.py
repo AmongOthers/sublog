@@ -54,7 +54,7 @@ def init():
     global package_path
     global sublog_js_path
 
-    package_path = join(sublime.packages_path(), "Sublog")
+    package_path = join(sublime.packages_path(), "sublog")
     sublog_js_path = join(join(package_path, "sublog_js"), "sublog.js")
     header_template = "<!--sublog\n" + "{\n" + "    \"title\":\"%s\",\n" + "    \"category\":\"%s\",\n" + "    \"tags\":\"%s\",\n" + "    \"publish\":\"%s\",\n" + "    \"blog_id\":\"%s\"\n" + "}\n" + "sublog-->"
     #load settings
