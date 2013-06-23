@@ -54,7 +54,7 @@ def init():
     global package_path
     global sublog_js_path
 
-    package_path = join(sublime.packages_path(), "Sublog")
+    package_path = join(sublime.packages_path(), "sublog")
     sublog_js_path = join(join(package_path, "sublog_js"), "sublog.js")
     header_template = "<!--sublog\n" + "{\n" + "    \"title\":\"%s\",\n" + "    \"category\":\"%s\",\n" + "    \"tags\":\"%s\",\n" + "    \"publish\":\"%s\",\n" + "    \"blog_id\":\"%s\"\n" + "}\n" + "sublog-->"
     #load settings
@@ -98,6 +98,8 @@ def strip_title(title):
     return utitle
 
 def status(msg, thread=False):
+    if(type(msg) != type(u"")):
+        msg = msg.decode("utf-8")
     if not thread:
         sublime.status_message(msg)
     else:
@@ -125,7 +127,6 @@ class SublogPlugin(sublime_plugin.EventListener):
     def on_query_completions(self, view, prefix, locations):
         current_file = view.file_name()
         if '.md' in current_file:
-            print view.line(locations[0])
             line = view.substr(view.line(locations[0]))
             if "\"category\":" in line:
                 return cats
@@ -209,7 +210,6 @@ class PublishCommand(sublime_plugin.TextCommand):
          self.blog_info['tags'],
          self.blog_info['publish'],
          self.blog_info['blog_id'])
-        print "header %s" % header_str
         edit = self.view.begin_edit()
         self.view.replace(edit, self.header_region, header_str)
         self.view.end_edit(edit)
@@ -244,7 +244,6 @@ class PublishCommand(sublime_plugin.TextCommand):
                 result = server.metaWeblog.newPost("", login_name, login_password, self.post, self.blog_info["publish"] == "true")
                 if result:
                     self.blog_info["blog_id"] = result
-                    print self.blog_info
                     self.update_blog_info()
                     status('Successful', True)
                 else:
