@@ -230,7 +230,7 @@ class PublishCommand(sublime_plugin.TextCommand):
             show_ln = settings.get('show_ln');
             if show_ln:
                 show_ln_str = "true"
-            command = u"node \"%s\" \"%s\" %s" % (sublog_js_path, post_file, show_ln_str)
+        command = u"node \"%s\" \"%s\" %s" % (sublog_js_path, post_file, show_ln_str)
         p = os.popen(command.encode(locale.getpreferredencoding()))
         str = p.read()
         return str
