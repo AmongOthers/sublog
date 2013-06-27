@@ -6,7 +6,7 @@ body {
 	font:13.34px helvetica,arial,freesans,clean,sans-serif;
 	color:black;
 	line-height:1.4em;
-	background-color: #F8F8F8;
+	background-color: #f8f8f8;
 	padding: 0.7em;
 }
 p {
@@ -23,7 +23,7 @@ table td{border-bottom:1px solid #ddd;padding:.2em 1em;}
 input[type=text],input[type=password],input[type=image],textarea{font:99% helvetica,arial,freesans,sans-serif;}
 select,option{padding:0 .25em;}
 optgroup{margin-top:.5em;}
-pre,code{font:12px Monaco,"Courier New","DejaVu Sans Mono","Bitstream Vera Sans Mono",monospace;}
+pre,code{font:12px monaco,"courier new","dejavu sans mono","bitstream vera sans mono",monospace;}
 pre {
 	margin:1em 0;
 	font-size:12px;
@@ -57,6 +57,10 @@ a:hover{text-decoration:underline;}
 a code,a:link code,a:visited code{color:#4183c4;}
 h2,h3{margin:1em 0;}
 h1,h2,h3,h4,h5,h6{border:0;}
+/*左侧日历*/
+#blog-calendar {
+  display: none;
+}
 /*文章标题*/
 .postTitle a{font-size:250% !important;text-decoration: none !important;}
 h1{font-size:170%;border-top:4px solid #aaa;padding-top:.5em;margin-top:1.5em;}
@@ -73,15 +77,15 @@ dt{font-weight:bold;margin-left:1em;}
 dd{margin-left:2em;margin-bottom:1em;}
 /*
 
-Zenburn style from voldmar.ru (c) Vladimir Epifanov <voldmar@voldmar.ru>
-based on dark.css by Ivan Sagalaev
+zenburn style from voldmar.ru (c) vladimir epifanov <voldmar@voldmar.ru>
+based on dark.css by ivan sagalaev
 
 */
 
 pre code {
   display: block; padding: 0.5em;
-  background: #3F3F3F;
-  color: #DCDCDC;
+  background: #3f3f3f;
+  color: #dcdcdc;
 }
 
 pre .keyword,
@@ -91,25 +95,25 @@ pre .django .keyword,
 pre .css .class,
 pre .css .id,
 pre .lisp .title {
-  color: #E3CEAB;
+  color: #e3ceab;
 }
 
 pre .django .template_tag,
 pre .django .variable,
 pre .django .filter .argument {
-  color: #DCDCDC;
+  color: #dcdcdc;
 }
 
 pre .number,
 pre .date {
-  color: #8CD0D3;
+  color: #8cd0d3;
 }
 
 pre .dos .envvar,
 pre .dos .stream,
 pre .variable,
 pre .apache .sqbracket {
-  color: #EFDCBC;
+  color: #efdcbc;
 }
 
 pre .dos .flow,
@@ -118,12 +122,12 @@ pre .python .exception,
 pre .python .built_in,
 pre .literal,
 pre .tex .special {
-  color: #EFEFAF;
+  color: #efefaf;
 }
 
 pre .diff .chunk,
 pre .ruby .subst {
-  color: #8F8F8F;
+  color: #8f8f8f;
 }
 
 pre .dos .keyword,
@@ -148,7 +152,7 @@ pre .ruby .symbol .keyword,
 pre .ruby .symbol .keymethods,
 pre .ruby .string,
 pre .ruby .instancevar {
-  color: #DCA3A3;
+  color: #dca3a3;
 }
 
 pre .diff .deletion,
@@ -166,7 +170,7 @@ pre .attr_selector,
 pre .pseudo,
 pre .apache .cbracket,
 pre .tex .formula {
-  color: #CC9393;
+  color: #cc9393;
 }
 
 pre .shebang,
@@ -176,7 +180,7 @@ pre .java .annotation,
 pre .template_comment,
 pre .pi,
 pre .doctype {
-  color: #7F9F7F;
+  color: #7f9f7f;
 }
 
 pre .xml .css,
@@ -184,4 +188,18 @@ pre .xml .javascript,
 pre .xml .vbscript,
 pre .tex .formula {
   opacity: 0.5;
+}
+div .code {
+  margin: 5px;
+  display: block;
+  background: #3f3f3f;
+  background-color:#eee;
+  color: #dcdcdc;
+}
+pre {
+  margin: 0;
+  padding: 0;
+  white-space: pre;
+  word-wrap: normal;
+  background: #3f3f3f;
 }

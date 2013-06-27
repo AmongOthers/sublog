@@ -37,18 +37,12 @@ import sublime
 import sublime_plugin
 
 global cats
-global login_name
-global login_password
-global server
 global header_template
 global package_path
 global sublog_js_path
 
 def init():
     global cats
-    global login_name
-    global login_password
-    global server
     global header_template
     global package_path
     global sublog_js_path
@@ -57,20 +51,20 @@ def init():
     sublog_js_path = join(join(package_path, "sublog_js"), "sublog.js")
     header_template = "<!--sublog\n" + "{\n" + "    \"title\":\"%s\",\n" + "    \"category\":\"%s\",\n" + "    \"tags\":\"%s\",\n" + "    \"publish\":\"%s\",\n" + "    \"blog_id\":\"%s\"\n" + "}\n" + "sublog-->"
     #load settings
+    get_cats_async()
+
+def get_cats_async():
     settings = sublime.load_settings('sublog.sublime-settings')
     login_name = settings.get('login_name')
     login_password = settings.get('login_password');
     url = settings.get('xml_rpc_url')
-
-    server = ServerProxy(url)
-    get_cats_async()
-
-def get_cats_async():
-    t = threading.Thread(target=get_cats)
+    #t = threading.Thread(target=get_cats)
+    t = threading.Thread(target=lambda: get_cats(login_name, login_password, url))
     t.start()
     handle_thread(t, "Geting cats")
 
-def get_cats():
+def get_cats(login_name, login_password, url):
+    server = ServerProxy(url)
     global cats
     try:
         result = server.metaWeblog.getCategories("", login_name, login_password)
@@ -79,7 +73,7 @@ def get_cats():
         for item in result:
             cat = strip_title(item["title"])
             cats.append(cat)
-            
+
     except Exception as e:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         traceback.print_exception(exc_type, exc_value, exc_traceback)
@@ -100,7 +94,7 @@ def strip_title(title):
         utitle = utitle[6:]
         description = utitle + "\t" + u"网站分类"
     else:
-        description = description + "\t" + u"博客分类"
+        description = utitle + "\t" + u"博客分类"
     return (description, utitle)
 
 def status(msg, thread=False):
@@ -155,11 +149,15 @@ class PublishCommand(sublime_plugin.TextCommand):
             status("Please set title")
             return
 
+        settings = sublime.load_settings('sublog.sublime-settings')
+        self.login_name = settings.get('login_name')
+        self.login_password = settings.get('login_password');
+        self.url = settings.get('xml_rpc_url')
         self.post = { 'title': self.blog_info['title'],
                 #'description': self.markdown2html(self.blog_content),
                 'description': self.node_markdown2html(),
                 'link': '',
-                'author': login_name,
+                'author': self.login_name,
                 "categories": [self.blog_info['category']],
                 "mt_keywords": self.blog_info['tags']
             }
@@ -189,7 +187,7 @@ class PublishCommand(sublime_plugin.TextCommand):
             self.view.end_edit(edit)
             self.get_header_region()
         else:
-            pattern = re.compile("<!--sublog(.*)sublog-->", re.MULTILINE | re.DOTALL)
+            pattern = re.compile("<!--sublog(.*?)sublog-->", re.MULTILINE | re.DOTALL)
             match = pattern.match(header_str)
             header = match.group(1)
             self.blog_info = json.loads(header)
@@ -226,23 +224,32 @@ class PublishCommand(sublime_plugin.TextCommand):
 
     def node_markdown2html(self):
         post_file = self.view.file_name()
-        command = u"node \"%s\" \"%s\"" % (sublog_js_path, post_file)
+        show_ln_str = "false"
+        settings = sublime.load_settings('sublog.sublime-settings')
+        if settings.has('show_ln'):
+            show_ln = settings.get('show_ln');
+            if show_ln:
+                show_ln_str = "true"
+            command = u"node \"%s\" \"%s\" %s" % (sublog_js_path, post_file, show_ln_str)
         p = os.popen(command.encode(locale.getpreferredencoding()))
         str = p.read()
         return str
 
     def publish(self):
         try:
+            server = ServerProxy(self.url)
             if self.blog_info.has_key("blog_id") and self.blog_info["blog_id"] != "":
                 print "edit post"
-                result = server.metaWeblog.editPost(self.blog_info["blog_id"], login_name, login_password, self.post, self.blog_info["publish"] == "true")
+                result = server.metaWeblog.editPost(self.blog_info["blog_id"], self.login_name,
+                 self.login_password, self.post, self.blog_info["publish"] == "true")
                 if result:
                     status('Successful', True)
                 else:
                     status('Error', True)
             else:
                 print "new post"
-                result = server.metaWeblog.newPost("", login_name, login_password, self.post, self.blog_info["publish"] == "true")
+                result = server.metaWeblog.newPost("", self.login_name, self.login_password,
+                 self.post, self.blog_info["publish"] == "true")
                 if result:
                     self.blog_info["blog_id"] = result
                     self.update_blog_info()
