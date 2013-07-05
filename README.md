@@ -50,8 +50,13 @@ sublog-->
 		![test](file:///c:/image.png)
 		![test](file:///../image.png)
 
+	在UNIX like上：
+
+		![test](file:////home/AmongOthers/mario.gif)
+		![test](file:///~/mario.gif)
+
 	当sublog检测到这是一个本地图片url的时候，会自动上传图片，并替换源文件的url为上传成功后得到的url
-	
+
 	![mario](http://images.cnitblog.com/blog/274442/201307/05151459-924c04129ec64e7fafac6a8ff040eb8f.gif)
 
 
