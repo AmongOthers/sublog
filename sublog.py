@@ -247,6 +247,8 @@ class PublishCommand(sublime_plugin.TextCommand):
                     file_url = m.group(1)
                     path = m.group(2)
                     path = path.decode('utf-8')
+                    #expand ~ on UNIX like
+                    path = os.path.expanduser(path)
                     current_path = os.path.dirname(self.current_file)
                     path = os.path.normpath(join(current_path, path))
                     with open(path.encode(locale.getpreferredencoding()), "rb") as image_file:
