@@ -47,13 +47,13 @@ sublog-->
 
 0. 支持本地图片地址作为img的url标记，例如:
 
-		![test](file:///c:/image.png)
-		![test](file:///../image.png)
+		![test](file://c:/image.png)
+		![test](file://../image.png)
 
 	在UNIX like上：
 
-		![test](file:////home/AmongOthers/mario.gif)
-		![test](file:///~/mario.gif)
+		![test](file:///home/AmongOthers/mario.gif)
+		![test](file://~/mario.gif)
 
 	当sublog检测到这是一个本地图片url的时候，会自动上传图片，并替换源文件的url为上传成功后得到的url
 
