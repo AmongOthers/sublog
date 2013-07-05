@@ -45,6 +45,16 @@ sublog-->
 
 	    "show_ln":true
 
+0. 支持本地图片地址作为img的url标记，例如:
+
+		![test](file:///c:/image.png)
+		![test](file:///../image.png)
+
+	当sublog检测到这是一个本地图片url的时候，会自动上传图片，并替换源文件的url为上传成功后得到的url
+	
+	![mario](http://images.cnitblog.com/blog/274442/201307/05151459-924c04129ec64e7fafac6a8ff040eb8f.gif)
+
+
 0. enjoy!
 
 ## Makrdown兼容性
@@ -69,3 +79,5 @@ sublog-->
 0. 显示行号
 
 0. 修改settings的加载方式，每次执行命令时都加载，使得改变可以即时生效
+
+0. 增加img支持
