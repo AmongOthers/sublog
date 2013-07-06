@@ -202,7 +202,7 @@ class PublishCommand(sublime_plugin.TextCommand):
             self.header_region = self.view.line(0)
             self.is_old_format = True
         elif first_line.startswith("<!--sublog"):
-            self.header_region = self.view.find("<!--sublog((.|\n)*)sublog-->", 0)
+            self.header_region = self.view.find("<!--sublog((.|\n)*?)sublog-->", 0)
         else:
             self.header_region = None
 
