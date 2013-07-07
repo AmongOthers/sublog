@@ -319,7 +319,6 @@ class PublishCommand(sublime_plugin.TextCommand):
         return str
 
     def upload_local_images(self, blog_content):
-        print blog_content
         pattern = re.compile("<img data-sublog=\"image\" src=\"(file://(.*?))\".*?>", re.MULTILINE | re.DOTALL)
         while True:
             m= pattern.search(blog_content)
@@ -338,6 +337,7 @@ class PublishCommand(sublime_plugin.TextCommand):
 
     def publish(self):
         try:
+            print self.post["description"]
             #检查是否有需要上传的图片
             if not self.upload_local_images(self.post["description"]):
                 return

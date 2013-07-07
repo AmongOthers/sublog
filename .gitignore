@@ -1,2 +1,3 @@
 sublog.sublime-settings
 *.pyc
+temp*

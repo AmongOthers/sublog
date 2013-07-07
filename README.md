@@ -10,6 +10,9 @@ sublog-->
 
 灵感来自[米米饭](http://www.cnblogs.com/meetrice/archive/2013/02/14/2911238.html)
 
+## 功能一览
+[为什么你应该试试用Sublog写博客](http://www.cnblogs.com/zhengwenwei/p/3175646.html)
+
 ## 项目主页：
 [sublog](https://github.com/AmongOthers/sublog)
 
@@ -45,6 +48,27 @@ sublog-->
 
 	    "show_ln":true
 
+0. 支持github的代码块定义方式，例如下面的代码
+
+	<pre><code class="no-highlight">
+	```python ln_on
+	import random
+
+	class CardGame(object):
+	    """ a sample python class """
+	    NB_CARDS = 32
+	    def __init__(self, cards=5):
+	        self.cards = random.sample(range(self.NB_CARDS), 5)
+	        print 'ready to play'
+	```
+	</code></pre>
+
+	建议最好使用这种方式，由程序自动判断语言可能耗时较长。另外 `ln_on` 和 `ln_off` 作为辅助标记，表示本代码块是否启用行号。
+
+	支持的语言： 1c, apache, avrasm, axapta, bash, cmake, cpp, cs, css, delphi, diff, django, dos, erlang-repl, erlang, go, haskell, ini, java, javascript, lisp, ls lua, mel, nginx, objectivec, parser3, perl, php, profile, python, renderman, ruby, scala, smalltalk, sql, temp tex, vala, vbscript, vhdl, xml
+
+	特别的，使用no-highlight作为语言值表示本代码块不需要高亮。
+
 0. 支持本地图片地址作为img的url标记，例如:
 
 		![test](file://c:/image.png)
@@ -59,7 +83,7 @@ sublog-->
 
 	![mario](http://images.cnitblog.com/blog/274442/201307/05151459-924c04129ec64e7fafac6a8ff040eb8f.gif)
 
-	你还可以使用"shift + f10"发布当前选择的一行或多行里的"file://"url所指向的图片
+	你还可以使用"shift + f10"发布当前选择的一行或多行里的"file://"url所指向的图片。
 
 0. enjoy!
 
