@@ -218,7 +218,6 @@ class UploadImageCommand(sublime_plugin.TextCommand):
             if file_urls:
                 for file_url in file_urls:
                     file_url = file_url[0].rstrip()
-                    print file_url
                     upload_image(self.view, self.server, self.login_name, self.login_password, file_url, self.current_file)
 
 class PublishCommand(sublime_plugin.TextCommand):

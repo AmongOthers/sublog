@@ -59,6 +59,7 @@ sublog-->
 
 	![mario](http://images.cnitblog.com/blog/274442/201307/05151459-924c04129ec64e7fafac6a8ff040eb8f.gif)
 
+	你还可以使用"shift + f10"发布当前选择的一行或多行里的"file://"url所指向的图片
 
 0. enjoy!
 
