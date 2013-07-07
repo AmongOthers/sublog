@@ -17,6 +17,7 @@
     #xmlrpclib.Fault: <Fault 0: 'unsupported method called: __bases__.__nonzero__'>
 #每次重新加载这个插件，就会再补全列表里加上一次分类的重复
 #under ubuntu, print u"xxx" will throw a ascii codec decode error, we should use print u"xxx".encode("utf-8")
+#showdown.js 判断img的url不能含有空格
 
 import os
 from os.path import join
@@ -120,6 +121,66 @@ def handle_thread(thread, msg=None, cb=None, i=0, direction=1, width=8):
     elif not (cb == None):
         cb()
 
+def upload_image(view, server, login_name, login_password, file_url, current_file):
+    path_pattern = re.compile("file://(.*)")
+    m = path_pattern.match(file_url)
+    if not m:
+        return
+    path = m.group(1)
+    path = path.decode('utf-8')
+    #expand ~ on UNIX like
+    path = os.path.expanduser(path)
+    current_path = os.path.dirname(current_file)
+    path = os.path.normpath(join(current_path, path))
+    try:
+        with open(path.encode(locale.getpreferredencoding()), "rb") as image_file:
+            content = image_file.read()
+        #上传时候使用的名字并没有多大作用
+        image_name = "image.jpg"
+        image_type = "image/jpeg"
+        if path.endswith("gif"):
+            image_name = "image.gif"
+            image_type = "image/gif"
+        elif path.endswith("png"):
+            image_name = "image.png"
+            image_type = "image/png"
+        #name必须带后缀名，否则会提示无效的文件类型；bits虽然接口说要base64，但是反而需要使用原始数据
+        media = { 'bits': xmlrpclib.Binary(content), 'name': image_name, 'type': image_type}
+        result = server.metaWeblog.newMediaObject("", login_name, login_password, media)
+        if not result:
+            status('Error when uploading %s' % origin, True)
+            return False
+        http_url = result["url"]
+        #闭包
+        sublime.set_timeout(lambda view=view, file_url=file_url, http_url=http_url: update_image_url(view, file_url, http_url), 0)
+        return http_url
+    except IOError as e:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        traceback.print_exception(exc_type, exc_value, exc_traceback)
+        errorMsg = 'Error when uploading %s: %s' % (file_url, e)
+        status(errorMsg, True)
+        return None
+    except xmlrpclib.Fault as e:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        traceback.print_exception(exc_type, exc_value, exc_traceback)
+        errorMsg = 'Error when uploading %s: %s' % (file_url, e.faultString)
+        status(errorMsg, True)
+        return None
+
+def update_image_url(view, file_url, http_url):
+    file_url = file_url.decode('utf-8')
+    url_len = len(http_url)
+    from_position = 0
+    while True:
+        region = view.find(file_url, from_position)
+        if region:
+            edit = view.begin_edit()
+            view.replace(edit, region, http_url)
+            view.end_edit(edit)
+            from_position = region.a + url_len
+        else:
+            return
+
 #加载的时候开始执http://www.cnblogs.com/zhengwenwei/services/metaweblog.aspx行
 init()
 
@@ -140,6 +201,26 @@ class BlogInfoCommand(sublime_plugin.TextCommand):
         header_str = header_template % ('', '', '', 'false', '')
         self.view.insert(edit, 0, header_str + "\n\n")
 
+class UploadImageCommand(sublime_plugin.TextCommand):
+    def run(self, edit):
+        self.current_file = self.view.file_name()
+        settings = sublime.load_settings('sublog.sublime-settings')
+        self.login_name = settings.get('login_name')
+        self.login_password = settings.get('login_password');
+        self.url = settings.get('xml_rpc_url')
+        self.server = ServerProxy(self.url)
+        #[$]是错误的正则表达式
+        file_url_pattern = re.compile("(file://[^\'\")]*).*?(\)|$)")
+        selected_regions = self.view.sel()
+        for region in selected_regions:
+            text = self.view.substr(self.view.line(region))
+            file_urls = file_url_pattern.findall(text)
+            if file_urls:
+                for file_url in file_urls:
+                    file_url = file_url[0].rstrip()
+                    print file_url
+                    upload_image(self.view, self.server, self.login_name, self.login_password, file_url, self.current_file)
+
 class PublishCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         if not (self.get_blog_info()):
@@ -150,11 +231,12 @@ class PublishCommand(sublime_plugin.TextCommand):
             status("Please set title")
             return
 
-        settings = sublime.load_settings('sublog.sublime-settings')
         self.current_file = self.view.file_name()
+        settings = sublime.load_settings('sublog.sublime-settings')
         self.login_name = settings.get('login_name')
         self.login_password = settings.get('login_password');
         self.url = settings.get('xml_rpc_url')
+        self.server = ServerProxy(self.url)
         self.post = { 'title': self.blog_info['title'],
                 #'description': self.markdown2html(self.blog_content),
                 'description': self.node_markdown2html(),
@@ -238,76 +320,25 @@ class PublishCommand(sublime_plugin.TextCommand):
         return str
 
     def upload_local_images(self, blog_content):
+        print blog_content
         pattern = re.compile("<img data-sublog=\"image\" src=\"(file://(.*?))\".*?>", re.MULTILINE | re.DOTALL)
         while True:
             m= pattern.search(blog_content)
             if m:
-                try:
-                    origin = m.group(0)
-                    file_url = m.group(1)
-                    path = m.group(2)
-                    path = path.decode('utf-8')
-                    #expand ~ on UNIX like
-                    path = os.path.expanduser(path)
-                    current_path = os.path.dirname(self.current_file)
-                    path = os.path.normpath(join(current_path, path))
-                    with open(path.encode(locale.getpreferredencoding()), "rb") as image_file:
-                        content = image_file.read()
-                    #上传时候使用的名字并没有多大作用
-                    image_name = "image.jpg"
-                    image_type = "image/jpeg"
-                    if path.endswith("gif"):
-                        image_name = "image.gif"
-                        image_type = "image/gif"
-                    elif path.endswith("png"):
-                        image_name = "image.png"
-                        image_type = "image/png"
-                    #name必须带后缀名，否则会提示无效的文件类型；bits虽然接口说要base64，但是反而需要使用原始数据
-                    self.media = { 'bits': xmlrpclib.Binary(content), 'name': image_name, 'type': image_type}
-                    result = self.server.metaWeblog.newMediaObject("", self.login_name,
-                     self.login_password, self.media)
-                    if not result:
-                        status('Error when uploading %s' % origin, True)
-                        return False
-                    http_url = result["url"]
+                origin = m.group(0)
+                file_url = m.group(1)
+                http_url = upload_image(self.view, self.server, self.login_name, self.login_password, file_url, self.current_file)
+                if http_url:
                     replaced = origin.replace(file_url, http_url)
                     blog_content = blog_content.replace(origin, replaced)
                     self.post["description"] = blog_content
-                    #闭包
-                    sublime.set_timeout(lambda file_url=file_url, http_url=http_url: self.update_image_url(file_url, http_url), 0)
-                except IOError as e:
-                    exc_type, exc_value, exc_traceback = sys.exc_info()
-                    traceback.print_exception(exc_type, exc_value, exc_traceback)
-                    errorMsg = 'Error when uploading %s: %s' % (file_url, e)
-                    status(errorMsg, True)
-                    return False
-                except xmlrpclib.Fault as e:
-                    exc_type, exc_value, exc_traceback = sys.exc_info()
-                    traceback.print_exception(exc_type, exc_value, exc_traceback)
-                    errorMsg = 'Error when uploading %s: %s' % (file_url, e.faultString)
-                    status(errorMsg, True)
+                else:
                     return False
             else:
                 return True
 
-    def update_image_url(self, file_url, http_url):
-        file_url = file_url.decode('utf-8')
-        url_len = len(http_url)
-        from_position = 0
-        while True:
-            region = self.view.find("]\(" + file_url + "\)", from_position)
-            if region:
-                region = sublime.Region(region.a + 2, region.b - 1)
-                edit = self.view.begin_edit()
-                self.view.replace(edit, region, http_url)
-                self.view.end_edit(edit)
-                from_position = region.a + url_len
-            else:
-                return
-
     def publish(self):
         try:
-            self.server = ServerProxy(self.url)
             #检查是否有需要上传的图片
             if not self.upload_local_images(self.post["description"]):
                 return
