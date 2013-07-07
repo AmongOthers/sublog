@@ -319,7 +319,6 @@ class PublishCommand(sublime_plugin.TextCommand):
         return str
 
     def upload_local_images(self, blog_content):
-        print blog_content
         pattern = re.compile("<img data-sublog=\"image\" src=\"(file://(.*?))\".*?>", re.MULTILINE | re.DOTALL)
         while True:
             m= pattern.search(blog_content)

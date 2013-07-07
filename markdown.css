@@ -190,7 +190,7 @@ pre .tex .formula {
   opacity: 0.5;
 }
 div .code {
-  margin: 5px;
+  margin: 0px;
   display: block;
   background: #3f3f3f;
   background-color:#eee;
