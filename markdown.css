@@ -37,19 +37,6 @@ pre {
 	-webkit-border-radius:3px;
 	-moz-border-radius:3px;border-radius:3px;
 }
-pre code {
-	padding:0;
-	font-size:12px;
-	background-color:#eee;
-	border:none;
-}
-code {
-	font-size:12px;
-	background-color:#f8f8ff;
-	color:#444;
-	padding:0 .2em;
-	border:1px solid #dedede;
-}
 img{border:0;max-width:100%;}
 abbr{border-bottom:none;}
 a{color:#4183c4;text-decoration:none;}
@@ -83,9 +70,25 @@ based on dark.css by ivan sagalaev
 */
 
 pre code {
-  display: block; padding: 0.5em;
+  display: block;
+  padding: 0.5em;
   background: #3f3f3f;
   color: #dcdcdc;
+}
+
+pre ol {
+  display: block;
+  background: #3f3f3f;
+  color: #dcdcdc;
+  line-height: 0em;
+  margin: 0;
+  padding: 0.5em 0.5em 0.5em 4em;
+  padding-left: 4em !important;
+}
+
+pre ol li {
+  line-height: 1em;
+  margin-bottom: 0em !important;
 }
 
 pre .keyword,
