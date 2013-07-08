@@ -88,6 +88,15 @@ pre code {
   color: #dcdcdc;
 }
 
+pre ol {
+  display: block; padding: 0.5em;
+  background: #3f3f3f;
+  color: #dcdcdc;
+  line-height: 0.5;
+  margin: 0;
+  padding-left: 4em;
+}
+
 pre .keyword,
 pre .tag,
 pre .django .tag,
