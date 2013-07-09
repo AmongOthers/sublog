@@ -68,12 +68,20 @@ zenburn style from voldmar.ru (c) vladimir epifanov <voldmar@voldmar.ru>
 based on dark.css by ivan sagalaev
 
 */
+pre {
+  margin: 0;
+  padding: 0;
+  white-space: pre-wrap !important;
+  word-wrap: normal;
+  background: #3f3f3f;
+}
 
 pre code {
   display: block;
   padding: 0.5em;
   background: #3f3f3f;
   color: #dcdcdc;
+  white-space: pre-wrap !important;
 }
 
 pre ol {
@@ -198,18 +206,4 @@ pre .xml .javascript,
 pre .xml .vbscript,
 pre .tex .formula {
   opacity: 0.5;
-}
-div .code {
-  margin: 0px;
-  display: block;
-  background: #3f3f3f;
-  background-color:#eee;
-  color: #dcdcdc;
-}
-pre {
-  margin: 0;
-  padding: 0;
-  white-space: pre;
-  word-wrap: normal;
-  background: #3f3f3f;
 }
