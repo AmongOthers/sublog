@@ -48,6 +48,12 @@ sublog-->
 
 	    "show_ln":true
 
+0. 为了得到代码块中缩进在不同浏览器下的一致输出，请设置sublime text 2的tab为空格，例如我的设置如下：
+
+		"tab_size": 4,
+		"translate_tabs_to_spaces": true,
+		"detect_indentation": true,
+
 0. 支持github的代码块定义方式，例如下面的代码
 
 	<pre><code class="no-highlight">
