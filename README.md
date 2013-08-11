@@ -91,6 +91,13 @@ sublog-->
 
 	你还可以使用"shift + f10"发布当前选择的一行或多行里的"file://"url所指向的图片。
 
+0. 为了吸引得到关注，所以在默认在每篇博客后面添加了Powered by Sublog的链接，你可以
+在sublog.sublime-settings中添加:
+
+		"advertisement": false
+
+	来禁用。希望大家帮忙推广一下。:)
+
 0. enjoy!
 
 ## Makrdown兼容性

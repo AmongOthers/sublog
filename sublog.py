@@ -235,16 +235,24 @@ class PublishCommand(sublime_plugin.TextCommand):
         self.login_name = settings.get('login_name')
         self.login_password = settings.get('login_password');
         self.url = settings.get('xml_rpc_url')
+        content = self.node_markdown2html();
+        advertisementSetting = settings.get("advertisement");
+        isAdvertisementDisabled = advertisementSetting != None and advertisementSetting == False
+        if not isAdvertisementDisabled:
+            content = self.addAdvertisement(content)
         self.server = ServerProxy(self.url)
         self.post = { 'title': self.blog_info['title'],
                 #'description': self.markdown2html(self.blog_content),
-                'description': self.node_markdown2html(),
+                'description': content,
                 'link': '',
                 'author': self.login_name,
                 "categories": [self.blog_info['category']],
                 "mt_keywords": self.blog_info['tags']
             }
         self.publish_async()
+
+    def addAdvertisement(self, content):
+        return content + "<p style=\"font-style: italic; float: right\">Powered by <a href=\"http://www.cnblogs.com/zhengwenwei/p/3151861.html\">Sublog</a></p>";
 
     def get_blog_info(self):
         self.get_header_region()
