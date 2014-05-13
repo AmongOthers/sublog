@@ -36,6 +36,7 @@ import json
 
 import sublime
 import sublime_plugin
+import platform
 
 global cats
 global header_template
@@ -230,6 +231,10 @@ class PublishCommand(sublime_plugin.TextCommand):
             status("Please set title")
             return
 
+        #统一设置文件路径编码 
+        reload(sys)
+        sys.setdefaultencoding( "utf-8" )
+
         self.current_file = self.view.file_name()
         settings = sublime.load_settings('sublog.sublime-settings')
         self.login_name = settings.get('login_name')
@@ -266,11 +271,7 @@ class PublishCommand(sublime_plugin.TextCommand):
             #针对 #blog{...}的旧格式进行更新
             if not self.blog_info.has_key("blog_id"):
                 self.blog_info["blog_id"] = ""
-            header_str = header_template % (self.blog_info['title'],
-             self.blog_info['category'],
-             self.blog_info['tags'],
-             self.blog_info['publish'],
-             self.blog_info['blog_id'])
+            header_str = header_template % (self.blog_info['title'], self.blog_info['category'], self.blog_info['tags'], self.blog_info['publish'], self.blog_info['blog_id'])
             self.is_old_format = True
             edit = self.view.begin_edit()
             self.view.erase(edit, self.header_region)
@@ -279,8 +280,8 @@ class PublishCommand(sublime_plugin.TextCommand):
             self.get_header_region()
         else:
             pattern = re.compile("<!--sublog(.*?)sublog-->", re.MULTILINE | re.DOTALL)
-            match = pattern.match(header_str)
-            header = match.group(1)
+            match   = pattern.match(header_str)
+            header  = match.group(1)
             self.blog_info = json.loads(header)
         return True
 
@@ -299,11 +300,7 @@ class PublishCommand(sublime_plugin.TextCommand):
         sublime.set_timeout(lambda: self.do_update_blog_info(), 0)
 
     def do_update_blog_info(self):
-        header_str = header_template % (self.blog_info['title'],
-         self.blog_info['category'],
-         self.blog_info['tags'],
-         self.blog_info['publish'],
-         self.blog_info['blog_id'])
+        header_str = header_template % (self.blog_info['title'], self.blog_info['category'], self.blog_info['tags'], self.blog_info['publish'], self.blog_info['blog_id'])
         edit = self.view.begin_edit()
         self.view.replace(edit, self.header_region, header_str)
         self.view.end_edit(edit)
@@ -321,10 +318,17 @@ class PublishCommand(sublime_plugin.TextCommand):
             show_ln = settings.get('show_ln');
             if show_ln:
                 show_ln_str = "true"
-        command = u"node \"%s\" \"%s\" %s" % (sublog_js_path, post_file, show_ln_str)
-        p = os.popen(command.encode(locale.getpreferredencoding()))
-        str = p.read()
-        return str
+
+        # 针对MAC系统的node.js做下路径改变
+        sysstr = platform.system();
+        if(sysstr =="Windows"):
+            command = u"node \"%s\" \"%s\" %s" % (sublog_js_path, post_file, show_ln_str);
+        elif(sysstr == "Linux"):
+            command = u"node \"%s\" \"%s\" %s" % (sublog_js_path, post_file, show_ln_str)
+        elif(sysstr == "Darwin"): # Mac的名称
+            command="/usr/local/bin/node \"%s\" \"%s\" %s" % (sublog_js_path, post_file, show_ln_str);
+
+        return os.popen(command).read()
 
     def upload_local_images(self, blog_content):
         pattern = re.compile("<img data-sublog=\"image\" src=\"(file://(.*?))\".*?>", re.MULTILINE | re.DOTALL)
@@ -353,21 +357,20 @@ class PublishCommand(sublime_plugin.TextCommand):
                 result = self.server.metaWeblog.editPost(self.blog_info["blog_id"], self.login_name,
                  self.login_password, self.post, self.blog_info["publish"] == "true")
                 if result:
-                    status('Successful', True)
+                    status('编辑文章成功', True)
                 else:
-                    status('Error', True)
+                    status('编辑文章失败', True)
             else:
-                print "new post"
-                result = self.server.metaWeblog.newPost("", self.login_name, self.login_password,
-                 self.post, self.blog_info["publish"] == "true")
+                result = self.server.metaWeblog.newPost("", self.login_name, self.login_password,self.post, self.blog_info["publish"] == "true")
                 if result:
                     self.blog_info["blog_id"] = result
                     self.update_blog_info()
-                    status('Successful', True)
+                    status('发布文章成功', True)
                 else:
-                    status('Error', True)
+                    status('发布文章失败', True)
+
         except xmlrpclib.Fault as e:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             traceback.print_exception(exc_type, exc_value, exc_traceback)
-            errorMsg = 'Error: %s' % e.faultString
+            errorMsg = '错误: %s' % e.faultString
             status(errorMsg, True)
